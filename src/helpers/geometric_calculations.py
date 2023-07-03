@@ -3,11 +3,13 @@ from scipy.spatial import KDTree
 import numpy as np
 from itertools import combinations, permutations
 
+
 def calculate_points_distance(clientA: int, clientB:int , clients: pd.DataFrame):
         client_A_coords = clients.loc[clientA][["XCOORD", "YCOORD"]].values
         client_B_coords= clients.loc[clientB][["XCOORD", "YCOORD"]].values
         distance = np.linalg.norm(client_A_coords - client_B_coords)
         return distance
+
 
 def calculate_route_distance(permutated_route: list, distances: pd.DataFrame):
     distance = 0
@@ -15,6 +17,7 @@ def calculate_route_distance(permutated_route: list, distances: pd.DataFrame):
         client_A, client_B = permutated_route[client_idx], permutated_route[client_idx+1]
         distance += distances.loc[client_A, client_B]
     return distance
+
 
 def calculate_nodes_distances(clients:pd.DataFrame):
     distances = np.zeros((len(clients.index.values), len(clients.index.values)))

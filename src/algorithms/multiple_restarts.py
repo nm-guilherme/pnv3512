@@ -1,10 +1,12 @@
+import sys
 import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..')))
+
 import math
 import time
 import copy
 import random
 import logging
-from line_profiler import LineProfiler
 import numpy as np
 import pandas as pd
 import src.helpers.file_manager as fm

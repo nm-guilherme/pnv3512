@@ -1,9 +1,12 @@
-import time
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..')))
+
 import logging
 import numpy as np
 import pandas as pd
-import src.helpers.file_manager as fm
-import src.helpers.geometric_calculations as gc
+from src.helpers import file_manager as fm
+from src.helpers import geometric_calculations as gc
 from src.helpers.graphic_generator import plot_routes
 
 
@@ -24,17 +27,6 @@ def calculate_economies(distances: pd.DataFrame):
     economies = pd.DataFrame(economies, columns=["c_i", "c_j", "s_ij"]).sort_values(by="s_ij", ascending=False)
     economies = economies.astype({"c_i": int, "c_j": int})
     return economies
-
-# def remove_route(start_client, end_client, economies):
-#     not_start = economies['c_i']==start_client
-    
-    
-#     #added client can only be start
-#     not_destination = economies['c_j']==end_client
-#     added_route = economies[['c_i','c_j']].agg(tuple,1)==(end_client,start_client)
-#     remove_routes = economies[not_start | not_destination | added_route].index
-#     economies.drop(index=remove_routes, inplace=True)
-#     return economies
 
 def remove_route(new_client, old_client, economies):
     economies = economies[economies['c_i']!=old_client]
@@ -121,13 +113,6 @@ def clarke_wright(max_capacity, clients):
 
 if __name__=='__main__':
     #Disponibilizar o arquivo de input na mesma pasta do código
-    clients = fm.read_inputs("./R105.txt")
+    clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY=200
-    # routes = clarke_wright(MAX_CAPACITY, clients)
-    tempos = []
-    for c in [50, 100, 150, 200, 250, 300]:
-        s = time.time()
-        routes = clarke_wright(c, clients)
-        e = time.time()
-        tempos.append(e-s)
-    print(tempos)
+    routes = clarke_wright(MAX_CAPACITY, clients)

@@ -1,0 +1,6 @@
+*
+!/src
+!*.txt
+!*.md
+!.gitignore
+!__init__.py
