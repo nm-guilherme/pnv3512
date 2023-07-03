@@ -34,9 +34,8 @@ def get_p_closest_clients(p, route, route_demand, max_capacity, distances, stack
     not_allocated = list(filter(lambda x: x not in allocated_clients, distances.columns.values))
     demand_restriction = clients[clients["DEMAND"]+route_demand<=max_capacity].index
     viable_clients = list(set(demand_restriction) & set(not_allocated))
-    viable_clients = stacked_distances['c_j'].isin(viable_clients) &\
-                     stacked_distances['c_i'].isin(route)
-    # closest_clients = stacked_distances[viable_clients].drop_duplicates(subset=['c_j'])['c_j'][:p].values
+    viable_clients = (stacked_distances['c_j'].isin(viable_clients)) &\
+                     (stacked_distances['c_i'].isin(route))
     closest_clients, _ = [], []
     for idx, row in stacked_distances[viable_clients].iterrows():
         if not row['c_j'] in _:
@@ -124,14 +123,14 @@ def multi_start_heuristics(clients, max_capacity, n_restarts, p_closest):
             best_solution, best_solution_value = feasible_solution, solution_value
 
     logging.info(f"Melhor resultado obtido: {best_solution_value} km")      
-    fm.write_output(output_dir+"results.csv", [f"Solution Value: {best_solution_value}"])
+    fm.write_output(output_dir+"/results.csv", [f"Solution Value: {best_solution_value}"])
     for s in best_solution:
-        fm.write_output(output_dir+"results.csv", s)
+        fm.write_output(output_dir+"/results.csv", s)
     pd.DataFrame(data= records, columns=["solution_value"]).to_excel(output_dir+"/ObjectiveFunctionValues.xlsx")
     plot_routes(best_solution, clients, output_dir)
 
 if __name__=="__main__":     
     base_dir = "./R105.txt"
     clients = fm.read_inputs(base_dir)
-    best_solution, value = multi_start_heuristics(clients, 200, 1000, 5)
+    multi_start_heuristics(clients, 200, 200, 5)
        
