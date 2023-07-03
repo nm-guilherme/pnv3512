@@ -1,6 +1,6 @@
-*
 !/src
 !*.txt
 !*.md
-!.gitignore
-!__init__.py
+outputs
+.vscode
+__pycache__

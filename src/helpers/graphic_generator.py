@@ -12,9 +12,11 @@ def generate_color_list():
 
 def plot_routes(routes: list, clients: pd.DataFrame, output_dir:str):
     colors_list = generate_color_list()
-    xlim = (0, 100)
-    ylim = (0, 100)
+    clients['XCOORD'].max()
+    xlim = (clients['XCOORD'].min()-10, clients['XCOORD'].max()+10)
+    ylim = (clients['YCOORD'].min()-10, clients['YCOORD'].max()+10)
 
+    fig_all, main_ax = plt.subplots(figsize=(8, 8))
     for idx, route in enumerate(routes):
         fig, ax = plt.subplots(figsize=(5, 5))
 
@@ -23,15 +25,22 @@ def plot_routes(routes: list, clients: pd.DataFrame, output_dir:str):
         ax.plot(routes_coordinates['XCOORD'], routes_coordinates['YCOORD'], '--o', color=colors_list[idx])
         ax.plot([routes_coordinates['XCOORD'].iloc[-1], routes_coordinates['XCOORD'].iloc[0]],
                 [routes_coordinates['YCOORD'].iloc[-1], routes_coordinates['YCOORD'].iloc[0]], '--o', color=colors_list[idx])
+        main_ax.plot(routes_coordinates['XCOORD'], routes_coordinates['YCOORD'], '-o', color=colors_list[idx] , linewidth=0.7)
+        main_ax.plot([routes_coordinates['XCOORD'].iloc[-1], routes_coordinates['XCOORD'].iloc[0]], [routes_coordinates['YCOORD'].iloc[-1], routes_coordinates['YCOORD'].iloc[0]], 
+                     '-o', color=colors_list[idx], linewidth=0.7)
         for x, y, label in zip(routes_coordinates["XCOORD"], routes_coordinates["YCOORD"], route):
-            ax.annotate(label, (x, y), textcoords="offset points", xytext=(0,10), ha='center')
+            ax.annotate(label, (x, y), textcoords="offset points", xytext=(0,2), ha='center')
+            main_ax.annotate(label, (x, y), textcoords="offset points", xytext=(0,2), ha='center')
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)  
-        fig.suptitle(f"Route_{idx}")
+        fig.suptitle(f"Route {idx}")
         fig.tight_layout()
         fig.savefig(output_dir+f"/Route_{idx}.png")
-
-
+    main_ax.set_xlim(xlim)
+    main_ax.set_ylim(ylim)  
+    fig_all.suptitle(f"All Routes")
+    fig_all.tight_layout()
+    fig_all.savefig(output_dir+f"/AllRoutes.png")
 
 if __name__=="__main__":     
     clients = fm.read_inputs(r"C:\Users\gmorae01\OneDrive - Kearney\Documents\Personal\POLI\PNV3512 - Planejamento de Sistemas Logísticos\R105.txt")
@@ -44,4 +53,4 @@ if __name__=="__main__":
     [0,16,83,45,7,49,11,63,32,30,71,35,79,0],
     [0,19,86,44,0]]
 
-    plot_routes(routes, clients)
+    plot_routes(routes, clients, r"C:\Users\gmorae01\OneDrive - Kearney\Documents\Personal\POLI\PNV3512 - 2\pnv3512\testes")

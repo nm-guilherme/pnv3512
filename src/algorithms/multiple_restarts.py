@@ -35,7 +35,7 @@ def get_p_closest_clients(p, route, route_demand, max_capacity, distances, stack
     demand_restriction = clients[clients["DEMAND"]+route_demand<=max_capacity].index
     viable_clients = list(set(demand_restriction) & set(not_allocated))
     viable_clients = (stacked_distances['c_j'].isin(viable_clients)) &\
-                     (stacked_distances['c_i'].isin(route))
+                     (stacked_distances['c_i'].isin(route[1:-1]))
     closest_clients, _ = [], []
     for idx, row in stacked_distances[viable_clients].iterrows():
         if not row['c_j'] in _:
