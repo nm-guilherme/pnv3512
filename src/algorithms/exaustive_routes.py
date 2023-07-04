@@ -56,26 +56,25 @@ def generate_routes_method(clients: pd.DataFrame, max_capacity: int, n_clients: 
 
         logging.info(f"Avaliando {math.comb(n_clients,i)} combinações de {i} clientes")
         for route in combinations(clients.index.values[1:n_clients+1],i):
+            permutations_respecting_demand = math.perm(i,i)
             if check_if_route_respects_capacity(route, demands, max_capacity):
                 log_records[i]['combinations_respecting_demand'] += 1 
                 best_route_distance = None
-                evaluated_routes = []
+                log_records[i]['permutations_respecting_demand'] += permutations_respecting_demand
                 len_route = i
                 for idx, permutated_route in enumerate(permutations(route)):
                     if is_symmetric_route(idx, len_route):
                         break
                     permutated_route = list(permutated_route)
-                    log_records[i]['permutations_respecting_demand'] += 1 
                     log_records[i]['permutations_respecting_demand_not_symmetric'] += 1     
-                    evaluated_routes.append(permutated_route[:])
                     permutated_route.insert(0, 0) #depósito no início
                     permutated_route.append(0) #depósito no fim
-                    route_distance = gc.calculate_route_distance_dict(permutated_route, distances_dict)
+                    route_distance = gc.calculate_route_distance(permutated_route, distances_dict)
                     if not best_route_distance or route_distance<best_route_distance:
                         best_route_distance = route_distance
                         best_route = permutated_route
                 routes.append(best_route)
-    fm.write_list_in_csv(output_dir+"/results.csv", best_route)
+    fm.write_list_in_csv(output_dir+"/results.csv", routes)
     end_time = time.time()
     execution_time = end_time - start_time
     minutes, seconds = divmod(execution_time, 60)
@@ -87,6 +86,6 @@ def generate_routes_method(clients: pd.DataFrame, max_capacity: int, n_clients: 
 if __name__=='__main__':
     clients = fm.read_inputs("./R105.txt")
     MAX_CAPACITY=60
-    routes, log_dict, execution_time = generate_routes_method(clients, MAX_CAPACITY, 40)
-    fm.write_output("times.csv", [40, execution_time])
+    routes, log_dict, execution_time = generate_routes_method(clients, MAX_CAPACITY, 20)
+    fm.write_output("times.csv", [i, execution_time])
         

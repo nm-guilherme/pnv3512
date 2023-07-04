@@ -59,10 +59,6 @@ def clarke_wright(max_capacity, clients):
     clients_not_in_route, clients_in_route = clients.index.values[1:], []
     solution_value, route = 0, []
     while len(clients_not_in_route)>0:  
-        if not economies or len(clients_not_in_route)==1:
-            route = clients_not_in_route
-            routes.append(route)
-            break
         route, route_demand = get_initial_route(max_capacity, economies, demands)
         clients_in_route.extend(route)
         while route_demand<max_capacity:
@@ -87,6 +83,7 @@ def clarke_wright(max_capacity, clients):
             if tup[0] in clients_in_route or tup[1] in clients_in_route:
                 del economies[tup]
         routes.append(route)
+        clients_not_in_route = [c for c in clients_not_in_route if c not in clients_in_route]
     logging.info(f"Valor da função objetivo: {solution_value} km")
     fm.write_output(output_dir+"/results.csv", [f"Solution Value: {solution_value}"])
     for s in routes:
@@ -97,4 +94,6 @@ def clarke_wright(max_capacity, clients):
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
+    for c in [100, 150, 200, 250, 300]:
+        
     routes = clarke_wright(MAX_CAPACITY, clients)

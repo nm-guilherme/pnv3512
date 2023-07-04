@@ -58,10 +58,6 @@ def clarke_wright(clients, economies, demands, max_capacity, distances_dict):
     clients_not_in_route, clients_in_route = clients.index.values[1:], []
     solution_value, route = 0, []
     while len(clients_not_in_route)>0:  
-        if not economies or len(clients_not_in_route)==1:
-            route = clients_not_in_route
-            routes.append(route)
-            break
         route, route_demand = get_initial_route(max_capacity, economies, demands)
         clients_in_route.extend(route)
         while route_demand<max_capacity:
@@ -86,6 +82,7 @@ def clarke_wright(clients, economies, demands, max_capacity, distances_dict):
             if tup[0] in clients_in_route or tup[1] in clients_in_route:
                 del economies[tup]
         routes.append(route)
+        clients_not_in_route = [c for c in clients_not_in_route if c not in clients_in_route]
     return routes, solution_value
 
 def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
@@ -119,5 +116,5 @@ def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
-    randomic_clarke_wright(clients, MAX_CAPACITY, 200, 1, 1)
+    randomic_clarke_wright(clients, MAX_CAPACITY, 200, 0.5, 1.5)
 
