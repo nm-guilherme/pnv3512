@@ -30,7 +30,7 @@ def random_int(p, i):
     return random_number   
 
 # @profile
-def get_p_closest_clients(p, route, route_demand, max_capacity, distances, stacked_distances, allocated_clients):
+def get_p_closest_clients(route, route_demand, max_capacity, distances, stacked_distances, allocated_clients):
     not_allocated = list(filter(lambda x: x not in allocated_clients, distances.columns.values))
     demand_restriction = clients[clients["DEMAND"]+route_demand<=max_capacity].index
     viable_clients = list(set(demand_restriction) & set(not_allocated))
@@ -41,7 +41,7 @@ def get_p_closest_clients(p, route, route_demand, max_capacity, distances, stack
         if not row['c_j'] in _:
             closest_clients.append((row['c_i'], row['c_j']))
             _.append(row['c_j'])
-            if len(closest_clients)==p:
+            if len(closest_clients)==5:
                 break
     return closest_clients    
 
@@ -51,58 +51,62 @@ def get_number_of_vehicles(clients, max_capacity):
     logging.info(f"São necessários {vehicles_needed} veículos com {max_capacity} de capacidade para atender a demanda de {all_demand}")
     return vehicles_needed
 
-def get_best_insert_position(route, new_client, actual_client, distances):
+def get_best_insert_position(route, new_client, distances_dict):
     lowest_cost = np.inf
     for i in range(len(route)):
         if i!=0:
             client_before, client_after= route[i-1], route[i]
-            before_new = distances.loc[client_before, new_client]
-            new_after = distances.loc[client_after, new_client]
-            before_after = distances.loc[client_before, client_after]
+            before_new = distances_dict[client_before][new_client]
+            new_after = distances_dict[client_after][new_client]
+            before_after = distances_dict[client_before][client_after]
             cost_of_insertion = before_new+new_after-before_after
             if cost_of_insertion<lowest_cost:
                 lowest_cost = cost_of_insertion
                 insert_position = i
     return insert_position, lowest_cost
 
-def get_route_demand(route):
-    return sum(clients.loc[client_no, "DEMAND"] for client_no in route)
+def get_route_demand(route, demands):
+    return sum(demands[client_no] for client_no in route)
 
 # @profile
-def find_solution(initial_routes, p_closest, count_restarts, max_capacity, 
-                  vehicles_needed, chosen_clients,
-                  stacked_distances, distances):
+def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands):
     allocated_clients = copy.deepcopy(chosen_clients)
     solution_value = 0
-    for route in initial_routes:
-        route_demand = get_route_demand(route)
-        solution_value+= gc.calculate_route_distance(route, distances)
-        while route_demand<=max_capacity:
-
-            closest_clients = get_p_closest_clients(p_closest, route, route_demand, max_capacity, distances, 
+    solution_routes = []
+    exists_viableRoutes = len(initial_routes)
+    routes_demands = {str(route): get_route_demand(route, demands) for route in initial_routes}
+    solution_value = sum([gc.calculate_route_distance(r, distances_dict) for r in initial_routes])
+    while exists_viableRoutes>0 or len(allocated_clients) != len(distances_dict.keys()):
+        for route in initial_routes:
+            key = str(route)
+            closest_clients = get_p_closest_clients(route, routes_demands[str(route)], max_capacity, distances, 
                                                     stacked_distances, allocated_clients)
             if len(closest_clients)==0:
-                break
-            idx_sort = p_closest if len(closest_clients)>p_closest else len(closest_clients)
+                solution_routes.append(route[:])
+                initial_routes.remove(route)
+                exists_viableRoutes-=1
+                continue
+            idx_sort = len(closest_clients)
             old_client, new_client = closest_clients[random_int(idx_sort, count_restarts)]
             allocated_clients.append(new_client)
-            route_demand += clients.loc[new_client, "DEMAND"]
-            insert_position, cost = get_best_insert_position(route, new_client, old_client, distances)
+            routes_demands[str(route)] += clients.loc[new_client, "DEMAND"]
+            insert_position, cost = get_best_insert_position(route, new_client, distances_dict)
             route.insert(insert_position, new_client)
+            routes_demands[str(route)] = routes_demands.pop(key)
             solution_value += cost
-    if len(allocated_clients)!=len(distances.columns):
+    if len(allocated_clients)!=len(distances_dict.keys()):
         vehicles_needed+=1
         initial_routes = choose_clients(vehicles_needed, distances)
-        find_solution(initial_routes, p_closest, count_restarts, max_capacity, 
-                  vehicles_needed, chosen_clients,
-                  stacked_distances, distances)
-    return initial_routes, solution_value
+        find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands)
+    return solution_routes, solution_value
 
 # @profile
-def multi_start_heuristics(clients, max_capacity, n_restarts, p_closest):
+def multi_start_heuristics(clients, max_capacity, n_restarts):
     output_dir = fm.make_new_folder("MultiStarts")
     logging.info("Inicializando Heurística Construtiva Probabilística de Múltiplos Recomeços")
     distances = gc.calculate_nodes_distances(clients)
+    distances_dict = distances.to_dict()
+    demands = pd.Series(clients['DEMAND'].values,index = clients.index).to_dict()
     stacked_distances = gc.get_stacked_distances(distances)
     logging.info("Matriz de distâncias calculadas")
     vehicles_needed = get_number_of_vehicles(clients, max_capacity)
@@ -115,9 +119,9 @@ def multi_start_heuristics(clients, max_capacity, n_restarts, p_closest):
         count_restarts+=1
         logging.info(f"Recomeços: {count_restarts} -- {count_restarts/n_restarts*100:.0f}%")
         _initial_routes = copy.deepcopy(initial_routes)
-        feasible_solution, solution_value = find_solution(_initial_routes, p_closest, count_restarts, 
+        feasible_solution, solution_value = find_solution(_initial_routes, count_restarts, 
                                                           max_capacity, vehicles_needed, chosen_clients,
-                                                          stacked_distances, distances)
+                                                          stacked_distances, distances, distances_dict, demands)
         records.append(solution_value)
         if solution_value<best_solution_value:
             best_solution, best_solution_value = feasible_solution, solution_value
@@ -132,5 +136,5 @@ def multi_start_heuristics(clients, max_capacity, n_restarts, p_closest):
 if __name__=="__main__":     
     base_dir = "./R105.txt"
     clients = fm.read_inputs(base_dir)
-    multi_start_heuristics(clients, 200, 200, 5)
+    multi_start_heuristics(clients, 200, 200)
        

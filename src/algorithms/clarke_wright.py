@@ -68,19 +68,11 @@ def update_allocated_clients(route, clients_not_in_route, clients_in_route, econ
     economies.drop(index=economies[already_allocated_clients].index, inplace=True) #removendo clientes alocados da lista de economias
     return clients_not_in_route, clients_in_route
 
-def geometric_randomizer(clients, a=0.05, b=0.25):
-    alpha = np.random.uniform(a, b)
-    probabilities = [(1-alpha)**(k-1)*alpha for k in range(clients)]
-    total_probability = sum(probabilities)
-    normalized_probabilities = [p / total_probability for p in probabilities]
-    chosen_element = np.random.choice(clients, p=normalized_probabilities)
-    return chosen_element
-
-
-def clarke_wright(max_capacity, clients, probabilistic=False):
+def clarke_wright(max_capacity, clients):
     output_dir = fm.make_new_folder("Clarke_Wright")
     logging.info("Inicializando Algoritmo Clarke & Wright")
     distances = gc.calculate_nodes_distances(clients)
+    distances_dict = distances.to_dict()
     logging.info("Matriz de distâncias calculadas")
     economies = calculate_economies(distances)
     logging.info("Economias calculadas")
@@ -102,12 +94,7 @@ def clarke_wright(max_capacity, clients, probabilistic=False):
             if economies[viable_routes].shape[0]==0: 
                 no_viable_options = False
                 break
-            if probabilistic:
-                idx = geometric_randomizer(economies[viable_routes].shape[0], a=0.05, b=0.25)
-                highest_economy_route = economies[viable_routes].index.values[idx]
-            else:
-                highest_economy_route = economies[viable_routes]['s_ij'].idxmax() 
-
+            highest_economy_route = economies[viable_routes]['s_ij'].idxmax() 
             start_client, end_client = economies.loc[highest_economy_route][['c_i', 'c_j']].values 
             new_client, existing_client = insert_client_in_route(start_client, end_client, route)
             route_demand+=clients.loc[new_client, "DEMAND"] 
@@ -117,7 +104,7 @@ def clarke_wright(max_capacity, clients, probabilistic=False):
         route = [int(x) for x in route]
         route.insert(0, 0) #depósito no início
         route.append(0) #depósito no fim
-        solution_value+= gc.calculate_route_distance(route, distances)
+        solution_value+= gc.calculate_route_distance(route, distances_dict)
         routes.append(route)
         fm.write_output(output_dir+"/results.csv", route)
     logging.info(f"Valor da função objetivo: {solution_value} km")
@@ -128,4 +115,4 @@ def clarke_wright(max_capacity, clients, probabilistic=False):
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
-    routes = clarke_wright(MAX_CAPACITY, clients, probabilistic=True)
+    routes = clarke_wright(MAX_CAPACITY, clients)

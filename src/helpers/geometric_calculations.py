@@ -14,11 +14,18 @@ def calculate_points_distance(clientA: int, clientB:int , clients: pd.DataFrame)
         return distance
 
 
-def calculate_route_distance(permutated_route: list, distances: pd.DataFrame):
+# def calculate_route_distance(permutated_route: list, distances: pd.DataFrame):
+#     distance = 0
+#     for client_idx in range(len(permutated_route)-1):
+#         client_A, client_B = permutated_route[client_idx], permutated_route[client_idx+1]
+#         distance += distances.loc[client_A, client_B]
+#     return distance
+
+def calculate_route_distance(permutated_route: list, distances_dict: dict):
     distance = 0
     for client_idx in range(len(permutated_route)-1):
         client_A, client_B = permutated_route[client_idx], permutated_route[client_idx+1]
-        distance += distances.loc[client_A, client_B]
+        distance += distances_dict[client_A][client_B]
     return distance
 
 def calculate_vectors(clients, c1, c2):
@@ -51,6 +58,8 @@ def calculate_nodes_distances(clients:pd.DataFrame):
     for comb in combinations(clients.index.values,2):
         distances[comb[0], comb[1]]= calculate_points_distance(comb[0], comb[1], clients)
     return pd.DataFrame(distances+distances.T)
+
+
 
 
 def get_stacked_distances(distances):
