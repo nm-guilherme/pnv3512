@@ -64,27 +64,23 @@ def clarke_wright(clients, economies, demands, max_capacity, distances_dict):
             break
         route, route_demand = get_initial_route(max_capacity, economies, demands)
         clients_in_route.extend(route)
-        viable_options = True
-        while route_demand<max_capacity and viable_options:
-            viable_options = False
-            for arc in economies.keys():
-                add_to_right = (arc[0] == route[-1] and arc[1] not in clients_in_route and demands[arc[1]]+route_demand <= max_capacity)
-                add_to_left = (arc[1]== route[0] and arc[0] not in clients_in_route and demands[arc[0]]+route_demand <= max_capacity)
-                if add_to_right:
-                    route+=[arc[1]]
-                    clients_in_route+=[arc[1]]
-                    route_demand+=demands[arc[1]]
-                    viable_options = True
-                elif add_to_left:
-                    route.insert(0,arc[0])
-                    clients_in_route+=[arc[0]]
-                    route_demand+=demands[arc[0]]
-                    viable_options = True
-                    # del economies[arc]
-                if route_demand>=200:
-                    break
-        route.insert(0, 0) #depósito no início
-        route.append(0) #depósito no fim
+        while route_demand<max_capacity:
+            arcs = [arc for arc in economies.keys() if \
+                    (arc[0] == route[-1] and arc[1] not in clients_in_route and demands[arc[1]]+route_demand <= max_capacity)
+                    or (arc[1]== route[0] and arc[0] not in clients_in_route and demands[arc[0]]+route_demand <= max_capacity)]
+            if not arcs:
+                break
+            arc = arcs[0]
+            if arc[0]==route[-1]:
+                route+=[arc[1]]
+                clients_in_route+=[arc[1]]
+                route_demand+=demands[arc[1]]
+            elif  arc[1] == route[0]:
+                route.insert(0,arc[0])
+                clients_in_route+=[arc[0]]
+                route_demand+=demands[arc[0]]
+        route.insert(0, 0)
+        route.append(0)
         solution_value+= gc.calculate_route_distance(route, distances_dict)
         for tup in list(economies.keys()):
             if tup[0] in clients_in_route or tup[1] in clients_in_route:
@@ -123,5 +119,5 @@ def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
-    randomic_clarke_wright(clients, MAX_CAPACITY, 200, 0.5, 1.5)
+    randomic_clarke_wright(clients, MAX_CAPACITY, 200, 1, 1)
 
