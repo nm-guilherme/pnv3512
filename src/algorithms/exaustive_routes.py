@@ -30,43 +30,28 @@ def check_if_route_respects_capacity(route, demands, max_capacity):
 def is_symmetric_route(idx, len_route):
     return idx == math.perm(len_route,len_route)/2
 
-# @profile
 def generate_routes_method(clients: pd.DataFrame, max_capacity: int, n_clients: int):
     output_dir = fm.make_new_folder("ExhaustiveRoutes")
     logging.info("Inicializando a geração exaustiva de rotas e permutações")
     routes = []
     start_time = time.time()
-    distances = gc.calculate_nodes_distances(clients)
-    distances_dict = distances.to_dict()
-
+    distances_dict = gc.calculate_nodes_distances(clients).to_dict()
     demands = pd.Series(clients['DEMAND'].values,index = clients.index).to_dict()
     logging.info("Matriz de distâncias calculadas")
     max_clients = calculate_max_clients_in_route(clients.loc[1:n_clients], max_capacity)
     max_n_combinations = max_clients if max_clients<=n_clients else n_clients
     logging.info(f"Serão avaliadas combinações de até {max_n_combinations} clientes")
-    log_records = {}
-    cs = time.time()
     for i in range(1, max_n_combinations+1):
-        log_records[i]={}
-        log_records[i]['total_combinations'] = math.comb(n_clients,i)
-        log_records[i]['total_permutations'] = math.perm(i,i)*log_records[i]['total_combinations']
-        log_records[i]['combinations_respecting_demand'] = 0
-        log_records[i]['permutations_respecting_demand'] = 0
-        log_records[i]['permutations_respecting_demand_not_symmetric'] = 0
-
         logging.info(f"Avaliando {math.comb(n_clients,i)} combinações de {i} clientes")
         for route in combinations(clients.index.values[1:n_clients+1],i):
             permutations_respecting_demand = math.perm(i,i)
             if check_if_route_respects_capacity(route, demands, max_capacity):
-                log_records[i]['combinations_respecting_demand'] += 1 
                 best_route_distance = None
-                log_records[i]['permutations_respecting_demand'] += permutations_respecting_demand
                 len_route = i
                 for idx, permutated_route in enumerate(permutations(route)):
                     if is_symmetric_route(idx, len_route):
                         break
                     permutated_route = list(permutated_route)
-                    log_records[i]['permutations_respecting_demand_not_symmetric'] += 1     
                     permutated_route.insert(0, 0) #depósito no início
                     permutated_route.append(0) #depósito no fim
                     route_distance = gc.calculate_route_distance(permutated_route, distances_dict)
@@ -80,12 +65,10 @@ def generate_routes_method(clients: pd.DataFrame, max_capacity: int, n_clients: 
     minutes, seconds = divmod(execution_time, 60)
     time_formatted = "{:02d}m:{:02d}s".format(int(minutes), int(seconds))
     logging.info(f"Tempo de execução: {time_formatted}")
-    pd.DataFrame().from_dict(log_records).to_excel(output_dir+"/log_permutations.xlsx")
-    return routes, log_records, execution_time
+    return routes
 
 if __name__=='__main__':
     clients = fm.read_inputs("./R105.txt")
     MAX_CAPACITY=60
-    routes, log_dict, execution_time = generate_routes_method(clients, MAX_CAPACITY, 20)
-    fm.write_output("times.csv", [i, execution_time])
+    routes = generate_routes_method(clients, MAX_CAPACITY, 20)
         

@@ -29,7 +29,6 @@ def random_int(p, i):
     random_number = random.randint(0, p-1)
     return random_number   
 
-# @profile
 def get_p_closest_clients(route, route_demand, max_capacity, distances, stacked_distances, allocated_clients):
     not_allocated = list(filter(lambda x: x not in allocated_clients, distances.columns.values))
     demand_restriction = clients[clients["DEMAND"]+route_demand<=max_capacity].index
@@ -68,7 +67,6 @@ def get_best_insert_position(route, new_client, distances_dict):
 def get_route_demand(route, demands):
     return sum(demands[client_no] for client_no in route)
 
-# @profile
 def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands):
     allocated_clients = copy.deepcopy(chosen_clients)
     solution_value = 0
@@ -87,9 +85,9 @@ def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed,
                 exists_viableRoutes-=1
                 continue
             idx_sort = len(closest_clients)
-            old_client, new_client = closest_clients[random_int(idx_sort, count_restarts)]
+            _, new_client = closest_clients[random_int(idx_sort, count_restarts)]
             allocated_clients.append(new_client)
-            routes_demands[str(route)] += clients.loc[new_client, "DEMAND"]
+            routes_demands[str(route)] += demands[new_client]
             insert_position, cost = get_best_insert_position(route, new_client, distances_dict)
             route.insert(insert_position, new_client)
             routes_demands[str(route)] = routes_demands.pop(key)
@@ -100,10 +98,10 @@ def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed,
         find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands)
     return solution_routes, solution_value
 
-# @profile
 def multi_start_heuristics(clients, max_capacity, n_restarts):
     output_dir = fm.make_new_folder("MultiStarts")
     logging.info("Inicializando Heurística Construtiva Probabilística de Múltiplos Recomeços")
+    s = time.time()
     distances = gc.calculate_nodes_distances(clients)
     distances_dict = distances.to_dict()
     demands = pd.Series(clients['DEMAND'].values,index = clients.index).to_dict()
@@ -126,7 +124,10 @@ def multi_start_heuristics(clients, max_capacity, n_restarts):
         if solution_value<best_solution_value:
             best_solution, best_solution_value = feasible_solution, solution_value
 
+
     logging.info(f"Melhor resultado obtido: {best_solution_value} km")      
+    e = time.time()
+    logging.info(f"Tempo de processamento (s): {e-s}")
     fm.write_output(output_dir+"/results.csv", [f"Solution Value: {best_solution_value}"])
     for s in best_solution:
         fm.write_output(output_dir+"/results.csv", s)
@@ -136,5 +137,5 @@ def multi_start_heuristics(clients, max_capacity, n_restarts):
 if __name__=="__main__":     
     base_dir = "./R105.txt"
     clients = fm.read_inputs(base_dir)
-    multi_start_heuristics(clients, 200, 200)
+    multi_start_heuristics(clients, 200, 1000)
        

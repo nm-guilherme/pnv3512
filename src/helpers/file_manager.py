@@ -11,7 +11,6 @@ def read_inputs(path):
             index_col="CUST NO")
     return df
 
-
 def write_output(csv_path, new_line):
         with open(csv_path, "a", newline='', encoding="utf-8") as output_status:
                 wr = csv.writer(output_status, csv.QUOTE_ALL)

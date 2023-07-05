@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..')))
 
+import time
 import copy
 import random
 import logging
@@ -88,6 +89,7 @@ def clarke_wright(clients, economies, demands, max_capacity, distances_dict):
 def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
     output_dir = fm.make_new_folder("RandomicCWS")
     logging.info("Inicializando Clarke Wright randômico.")
+    s = time.time()
     distances = gc.calculate_nodes_distances(clients)
     logging.info("Matriz de distâncias calculadas")
     distances_dict = distances.to_dict()
@@ -107,6 +109,8 @@ def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
             best_solution, best_solution_value = feasible_solution, solution_value
 
     logging.info(f"Melhor resultado obtido: {best_solution_value} km")      
+    e = time.time()
+    logging.info(f"Tempo de processamento (s): {e-s}")
     fm.write_output(output_dir+"/results.csv", [f"Solution Value: {best_solution_value}"])
     for s in best_solution:
         fm.write_output(output_dir+"/results.csv", s)
@@ -116,5 +120,5 @@ def randomic_clarke_wright(clients, max_capacity, n_restarts, lower, upper):
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
-    randomic_clarke_wright(clients, MAX_CAPACITY, 200, 0.5, 1.5)
+    randomic_clarke_wright(clients, MAX_CAPACITY, 1000, 0.5, 1.5)
 

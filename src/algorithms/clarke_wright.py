@@ -49,6 +49,7 @@ def get_initial_route(max_capacity, economies, demands):
 def clarke_wright(max_capacity, clients):
     output_dir = fm.make_new_folder("Clarke_Wright")
     logging.info("Inicializando Algoritmo Clarke & Wright")
+    s = time.time()
     distances = gc.calculate_nodes_distances(clients)
     distances_dict = distances.to_dict()
     logging.info("Matriz de distâncias calculadas")
@@ -85,15 +86,16 @@ def clarke_wright(max_capacity, clients):
         routes.append(route)
         clients_not_in_route = [c for c in clients_not_in_route if c not in clients_in_route]
     logging.info(f"Valor da função objetivo: {solution_value} km")
+    e = time.time()
+    logging.info(f"Tempo de processamento (s): {e-s}")
     fm.write_output(output_dir+"/results.csv", [f"Solution Value: {solution_value}"])
     for s in routes:
         fm.write_output(output_dir+"/results.csv", s)
     plot_routes(routes, clients, output_dir)
     return routes
 
+import time
 if __name__=='__main__':
     clients = fm.read_inputs("R105.txt")
     MAX_CAPACITY = 200
-    for c in [100, 150, 200, 250, 300]:
-        
     routes = clarke_wright(MAX_CAPACITY, clients)
