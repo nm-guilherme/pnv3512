@@ -70,5 +70,5 @@ def generate_routes_method(clients: pd.DataFrame, max_capacity: int, n_clients: 
 if __name__=='__main__':
     clients = fm.read_inputs("./R105.txt")
     MAX_CAPACITY=60
-    routes = generate_routes_method(clients, MAX_CAPACITY, 20)
+    routes = generate_routes_method(clients, MAX_CAPACITY, 40)
         

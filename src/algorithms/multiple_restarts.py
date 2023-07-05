@@ -71,10 +71,10 @@ def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed,
     allocated_clients = copy.deepcopy(chosen_clients)
     solution_value = 0
     solution_routes = []
-    exists_viableRoutes = len(initial_routes)
+    exists_viableRoutes = vehicles_needed
     routes_demands = {str(route): get_route_demand(route, demands) for route in initial_routes}
     solution_value = sum([gc.calculate_route_distance(r, distances_dict) for r in initial_routes])
-    while exists_viableRoutes>0 or len(allocated_clients) != len(distances_dict.keys()):
+    while exists_viableRoutes>0:
         for route in initial_routes:
             key = str(route)
             closest_clients = get_p_closest_clients(route, routes_demands[str(route)], max_capacity, distances, 
@@ -94,8 +94,8 @@ def find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed,
             solution_value += cost
     if len(allocated_clients)!=len(distances_dict.keys()):
         vehicles_needed+=1
-        initial_routes = choose_clients(vehicles_needed, distances)
-        find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands)
+        initial_routes, chosen_clients = choose_clients(vehicles_needed, distances)
+        return find_solution(initial_routes, count_restarts, max_capacity, vehicles_needed, chosen_clients, stacked_distances, distances, distances_dict, demands)
     return solution_routes, solution_value
 
 def multi_start_heuristics(clients, max_capacity, n_restarts):
@@ -112,7 +112,6 @@ def multi_start_heuristics(clients, max_capacity, n_restarts):
     count_restarts=0
     best_solution, best_solution_value = [], np.inf
     records = []
-
     while count_restarts<n_restarts:
         count_restarts+=1
         logging.info(f"Recomeços: {count_restarts} -- {count_restarts/n_restarts*100:.0f}%")
